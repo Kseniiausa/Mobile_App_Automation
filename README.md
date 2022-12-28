@@ -1,1 +1,1 @@
-# Mobile_App_Automation :D
+# Mobile_App_Automation
