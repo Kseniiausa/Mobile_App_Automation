@@ -37,8 +37,111 @@ public class FirstTest {
         driver.quit();
     }
 
+    //Сохранить статью в избранное и удалить
     @Test
+    public void saveFirstArticleToMyList(){
 
+        waitForElementAndClick( //Поиск и клик
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find Search Wiki input",
+                5);
+
+        waitForElementAndSendKeys(  //Поиск и ввод
+                By.xpath("//*[contains(@text, 'Search…')]"),
+                "Java",
+                "Cannot find search input",
+                5);
+
+        waitForElementAndClick( //Поиск и клик
+                By.xpath("//*[@resource-id = 'org.wikipedia:id/page_list_item_container']//*[@text = 'Object-oriented programming language']"),
+                "Cannot find Search Wiki input",
+                25);
+
+        waitForElementPresent( // ожидаем элемент
+                By.id("org.wikipedia:id/view_page_title_text"),
+                "Cannot find article title",
+                15
+        );
+
+        // Переходим в меню (...) статьи
+        waitForElementAndClick(
+                By.xpath("//android.widget.ImageView[@content-desc='More options']"),  //android.widget.ImageView[@content-desc='More options'
+                "Cannot find button to open article options",
+                15);
+
+        // Добавляем в чтение
+        waitForElementAndClick(
+                //By.xpath("//*[@text='Add to reading list']"),
+                By.xpath("/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.ListView/android.widget.LinearLayout[3]/android.widget.RelativeLayout/android.widget.TextView"),
+                "Cannot find option to add article to reading list",
+                15);
+
+        // Кликаем кнопку добавить - подверждение
+        waitForElementAndClick(
+                By.id("org.wikipedia:id/onboarding_button"),
+                "Cannot find 'Got it' tip overlay",
+                5);
+
+        // После всплывает окно с введением названия списка для чтения
+
+        // Очищаем дефолтное значение
+        waitForElementAndClear(
+                By.id("org.wikipedia:id/text_input"),
+                "Cannot find input to set name of articles folder",
+                5        );
+
+        // Вводим новое
+        String name_of_folder = "Learning programming"; // название папки с избранным
+        waitForElementAndSendKeys(
+                By.id("org.wikipedia:id/text_input"),
+                name_of_folder,
+                "Cannot put text into articles folder input",
+                5        );
+
+        // Подтверждаем
+        waitForElementAndClick(
+                By.xpath("//*[@text='OK']"),
+                "Cannot press OK button",
+                5
+        );
+
+        // Закрываем статю
+        waitForElementAndClick(
+                By.xpath("//android.widget.ImageButton[@content-desc='Navigate up']"),
+                "Cannot close article",
+                5
+        );
+
+        // Добавляем в избранное
+        waitForElementAndClick(By.xpath("//android.widget.FrameLayout[@content-desc='My lists']"),
+                "Cannot find navigation button to My list",
+                5
+        );
+
+        // Находим ее в избранном
+        waitForElementAndClick(
+                By.xpath("//*[@text='Learning programming']"),
+                //By.xpath("//*[@text='" + name_of_folder + "']"), // name_of_folder  - переменная
+                "Cannot find created folder",
+                5
+        );
+
+        // Свайпаем влево для удаления
+        swipeElementToLeft(
+                By.xpath("//*[@text='Java (programming language)']"),
+                "Cannot find saved article"
+        );
+
+        // Проверяем что статьи нет
+        waitForElementNotPresent(
+                By.xpath("//*[@text='Java (programming language)']"),
+                "Cannot delete saved article",
+                10);
+    }
+
+
+
+    @Test
     //Свайп до конца страницы
     public void testSwipeArticle() {
 
@@ -290,7 +393,7 @@ public class FirstTest {
 
 
     // Фреймворк
-    // Поиск элемента и ожадание его появления
+    // Ожидание элемента
     private WebElement waitForElementPresent(By by, String error_message, long timeoutInSeconds)
     {
     WebDriverWait wait = new WebDriverWait(driver, timeoutInSeconds); // время ожидания
@@ -340,7 +443,6 @@ public class FirstTest {
     return element;
     }
 
-
     // Свайп вверх
     protected void swipeUp(int timeOfSwipe) { // передаем время между нажатиями
         TouchAction action = new TouchAction(driver); //импорт из appium
@@ -351,7 +453,12 @@ public class FirstTest {
         int start_y = (int) (size.height * 0.8); //нач. переменная по У - на 80% экрана т.е. снизу
         int end_y = (int) (size.height * 0.2); //конеч. переменная по У
 
-        action.press(x, start_y).waitAction(timeOfSwipe).moveTo(x, end_y).release().perform();
+        action
+                .press(x, start_y)
+                .waitAction(timeOfSwipe)
+                .moveTo(x, end_y)
+                .release()
+                .perform();
     }
 
     // Быстрй свайп
@@ -376,4 +483,26 @@ public class FirstTest {
         }
     }
 
+    // Свай влево
+    protected void swipeElementToLeft(By by, String error_message) {
+        WebElement element = waitForElementPresent(
+                by,
+                error_message,
+                20);
+        int left_x = element.getLocation().getX(); // получаем самую левую точку
+        int right_x = element.getSize().getWidth(); // прибавляем ширину элемента
+
+        // Получаем середину элемента
+        int upper_y = element.getLocation().getY();
+        int lower_y = upper_y + element.getSize().getHeight();
+        int middle_y = (upper_y + lower_y) / 2;
+
+        TouchAction action = new TouchAction(driver); // инициализируем драйвер
+        action
+                .press(right_x, middle_y)
+                .waitAction(200)
+                .moveTo(left_x, middle_y)
+                .release()
+                .perform();
+    }
 }
